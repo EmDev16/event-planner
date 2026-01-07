@@ -1,26 +1,23 @@
 {
   "name": "project2-event",
   "version": "1.0.0",
-  "main": "index.js",
+  "type": "module",
+  "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node app.js",
     "dev": "nodemon app.js",
     "init-db": "node init-db.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "better-sqlite3": "^12.5.0",
+    "express": "^5.2.1",
+    "joi": "^18.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
   }
-},
-"keywords": [],
-"author": "",
-"license": "ISC",
-"description": "",
-"dependencies": {
-  "better-sqlite3": "^12.5.0",
-  "express": "^5.2.1",
-  "joi": "^18.0.2"
-},
-"devDependencies": {
-  "nodemon": "^3.1.11"
-}
-{
-  "type": "module"
 }
