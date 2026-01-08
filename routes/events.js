@@ -39,4 +39,27 @@ router.get('/', (req, res) => {
     }
 });
 
+router.get('/:id', (req, res) => {
+    const event = db
+        .prepare('SELECT * FROM events WHERE id = ?')
+        .get(req.params.id);
+
+    if (!event) {
+        return res.status(404).json({ error: 'Event niet gevonden' });
+    }
+
+    res.json(event);
+});
+
+router.get('/search/query', (req, res) => {
+    const q = `%${req.query.q || ''}%`;
+
+    const events = db.prepare(`
+    SELECT * FROM events
+    WHERE title LIKE ? OR description LIKE ?
+  `).all(q, q);
+
+    res.json(events);
+});
+
 export default router;
