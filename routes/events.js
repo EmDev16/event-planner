@@ -1,6 +1,7 @@
 import express from 'express';
 import { eventSchema } from '../validators/eventValidator.js';
 import db from '../db.js'; // toegevoegd
+import e from 'express';
 
 const router = express.Router();
 
@@ -21,44 +22,21 @@ function parseSorting(query) {
     return { sort, order };
 }
 
-router.post('/', (req, res) => {
-    const { error, value } = eventSchema.validate(req.body, { abortEarly: false });
+router.get('/', (req, res) => {
+    try {
+        const { limit, offset } = parsePagination(req.query);
+        const { sort, order } = parseSorting(req.query,
+            ['id', 'title', 'start_date'
+            ]);
 
-    if (error) {
-        const details = error.details || [];
-        let message = details[0]?.message || 'Ongeldige invoer';
+        const events = db.prepare(`
+        SELECT * FROM events ORDER BY ${sort} ${order} 
+        LIMIT ? OFFSET ?`).all(limit, offset);
 
-        // Als één (of beide) required-fouten aanwezig zijn voor start_date of end_date => generieke boodschap
-        const hasMissingStartOrEnd = details.some(d =>
-            d.type === 'any.required' && (d.context?.key === 'start_date' || d.context?.key === 'end_date')
-        );
-        if (hasMissingStartOrEnd) {
-            message = 'Beide velden moeten aanwezig zijn';
-        } else if (details.some(d => d.type === 'date.greater')) {
-            message = 'end_date moet later zijn dan start_date';
-        } else if (details.some(d => d.type && d.type.startsWith('date'))) {
-            message = 'Formaat: ISO date string (YYYY-MM-DD)';
-        }
-
-        return res.status(400).json({ error: message });
+        res.json(events);
+    } catch (err) {
+        res.status(400).json({ error: err.message });
     }
-
-    // Controleer capacity tegen locatiecapaciteit indien location_id opgegeven
-    if (value.location_id != null) {
-        const stmt = db.prepare('SELECT max_capacity FROM locations WHERE id = ?');
-        const row = stmt.get(value.location_id);
-
-        if (!row) {
-            return res.status(400).json({ error: 'Locatie niet gevonden' });
-        }
-
-        const maxCap = row.max_capacity;
-        if (value.capacity > maxCap) {
-            return res.status(400).json({ error: 'Kan niet groter zijn dan de locatiecapaciteit' });
-        }
-    }
-
-    return res.status(201).json({ success: true, data: value });
 });
 
 export default router;
