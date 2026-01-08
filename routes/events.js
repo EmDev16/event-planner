@@ -82,4 +82,32 @@ router.post('/', (req, res) => {
     res.status(201).json({ id: result.lastInsertRowid });
 });
 
+router.put('/:id', (req, res) => {
+  const { error, value } = eventSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ error: error.details[0].message });
+  }
+
+  const result = db.prepare(`
+    UPDATE events
+    SET title=?, description=?, start_date=?, end_date=?, location_id=?, capacity=?
+    WHERE id=?
+  `).run(
+    value.title,
+    value.description,
+    value.start_date,
+    value.end_date,
+    value.location_id,
+    value.capacity,
+    req.params.id
+  );
+
+  if (result.changes === 0) {
+    return res.status(404).json({ error: 'Event niet gevonden' });
+  }
+
+  res.json({ success: true });
+});
+
+
 export default router;
