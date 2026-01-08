@@ -15,6 +15,12 @@ function parsePagination(query) {
     return { limit, offset };
 }
 
+function parseSorting(query) {
+    const sort = allowed.includes(query.sort) ? query.sort : 'id';
+    const order = query.order === 'desc' ? 'DESC' : 'ASC';
+    return { sort, order };
+}
+
 router.post('/', (req, res) => {
     const { error, value } = eventSchema.validate(req.body, { abortEarly: false });
 
