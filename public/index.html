@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="nl">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Event Planner — Title Validatie</title>
+	<style>
+		body { font-family: system-ui, Arial; padding: 2rem; }
+		.form-row { margin-bottom: 0.75rem; }
+		.error { color: #b00020; }
+		.success { color: #0b7a1f; }
+		.input-invalid { border-color: #b00020; }
+	</style>
+</head>
+<body>
+	<h1>Event: titel aanmaken</h1>
+
+	<form id="eventForm" novalidate>
+		<div class="form-row">
+			<label for="title">Titel</label><br />
+			<input id="title" name="title" type="text" autocomplete="off" />
+		</div>
+		<button type="submit">Opslaan</button>
+		<div id="message" role="status" aria-live="polite"></div>
+		<p>
+			Regels: title moet een string zijn. Minimaal 3 karakters lang.<br />
+			Voorbeeld: "Go" → fout, "Go Workshop" → OK
+		</p>
+	</form>
+
+	<script>
+		(function () {
+			const form = document.getElementById('eventForm');
+			const titleInput = document.getElementById('title');
+			const msg = document.getElementById('message');
+
+			function validateTitle(value) {
+				if (typeof value !== 'string') {
+					return { ok: false, error: 'title moet een string zijn' };
+				}
+				const trimmed = value.trim();
+				if (trimmed.length < 3) {
+					return { ok: false, error: 'Minimaal 3 karakters lang' };
+				}
+				return { ok: true };
+			}
+
+			form.addEventListener('submit', function (e) {
+				e.preventDefault();
+				msg.textContent = '';
+				titleInput.classList.remove('input-invalid');
+
+				const value = titleInput.value;
+				const result = validateTitle(value);
+
+				if (!result.ok) {
+					msg.textContent = result.error;
+					msg.className = 'error';
+					titleInput.classList.add('input-invalid');
+					titleInput.focus();
+					return;
+				}
+
+				msg.textContent = 'Titel is geldig en opgeslagen (demo).';
+				msg.className = 'success';
+
+			});
+
+			titleInput.addEventListener('input', function () {
+				const res = validateTitle(titleInput.value);
+				if (res.ok) {
+					msg.textContent = '';
+					titleInput.classList.remove('input-invalid');
+				}
+			});
+		})();
+	</script>
+</body>
+</html>
