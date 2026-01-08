@@ -62,4 +62,24 @@ router.get('/search/query', (req, res) => {
     res.json(events);
 });
 
+router.post('/', (req, res) => {
+    const { error, value } = eventSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ error: error.details[0].message });
+    }
+    const result = db.prepare(`
+    INSERT INTO events (title, description, start_date, end_date, location_id, capacity)
+    VALUES (?, ?, ?, ?, ?)
+    `).run(
+        value.title,
+        value.description,
+        value.start_date,
+        value.end_date,
+        value.location_id,
+        value.capacity
+    );
+
+    res.status(201).json({ id: result.lastInsertRowid });
+});
+
 export default router;
