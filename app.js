@@ -10,8 +10,8 @@ app.get('/', (req, res) => {
 
 app.use(express.json());
 
-app.use("api/events", eventsRoutes);
-app.use("api/locations", locationsRoutes);
+app.use('/api/events', eventsRoutes);
+app.use('/api/locations', locationsRoutes);
 
 app.use(express.static('public'));
 

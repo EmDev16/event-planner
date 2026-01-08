@@ -21,7 +21,7 @@ export const locationSchema = Joi.object({
     }),
   city: Joi.string()
     .trim()
-    .regex(/^\D+$/) // geen cijfers toegestaan (geen digits)
+    .regex(/^\D+$/)
     .required()
     .messages({
       'string.base': 'city moet een string zijn',

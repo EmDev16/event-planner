@@ -1,5 +1,6 @@
 import express from 'express';
 import { eventSchema } from '../validators/eventValidator.js';
+import db from '../db.js'; // toegevoegd
 
 const router = express.Router();
 
@@ -23,6 +24,21 @@ router.post('/', (req, res) => {
     }
 
     return res.status(400).json({ error: message });
+  }
+
+  // Controleer capacity tegen locatiecapaciteit indien location_id opgegeven
+  if (value.location_id != null) {
+    const stmt = db.prepare('SELECT max_capacity FROM locations WHERE id = ?');
+    const row = stmt.get(value.location_id);
+
+    if (!row) {
+      return res.status(400).json({ error: 'Locatie niet gevonden' });
+    }
+
+    const maxCap = row.max_capacity;
+    if (value.capacity > maxCap) {
+      return res.status(400).json({ error: 'Kan niet groter zijn dan de locatiecapaciteit' });
+    }
   }
 
   return res.status(201).json({ success: true, data: value });
