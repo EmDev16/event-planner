@@ -109,5 +109,16 @@ router.put('/:id', (req, res) => {
   res.json({ success: true });
 });
 
+router.delete('/:id', (req, res) => {
+  const result = db
+    .prepare('DELETE FROM events WHERE id = ?')
+    .run(req.params.id);
+
+  if (result.changes === 0) {
+    return res.status(404).json({ error: 'Event niet gevonden' });
+  }
+
+  res.json({ success: true });
+});
 
 export default router;
