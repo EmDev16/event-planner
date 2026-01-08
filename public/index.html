@@ -1,79 +1,98 @@
 <!doctype html>
 <html lang="nl">
 <head>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Event Planner — Title Validatie</title>
-	<style>
-		body { font-family: system-ui, Arial; padding: 2rem; }
-		.form-row { margin-bottom: 0.75rem; }
-		.error { color: #b00020; }
-		.success { color: #0b7a1f; }
-		.input-invalid { border-color: #b00020; }
-	</style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Event Planner — Kort formulier</title>
+<style>
+  body{font-family:system-ui,Arial;margin:20px;display:flex;gap:20px}
+  .wrap{display:flex;gap:20px;width:100%;max-width:1000px}
+  .form, .list{background:#fff;padding:16px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+  .form{flex:1}
+  .list{width:320px}
+  label{display:block;font-weight:600;margin-top:8px}
+  input,select,textarea{width:100%;padding:8px;margin-top:6px;border:1px solid #e6e9ef;border-radius:6px}
+  button{margin-top:10px;padding:8px 12px;border-radius:8px;border:none;background:#2563eb;color:#fff;cursor:pointer}
+  .ev{padding:8px;border-bottom:1px solid #f0f0f0}
+  .muted{color:#6b7280;font-size:13px}
+</style>
 </head>
 <body>
-	<h1>Event: titel aanmaken</h1>
+  <div class="wrap">
+    <div class="form">
+      <h3>Nieuw event</h3>
+      <form id="f">
+        <label>Titel<input id="title" required/></label>
+        <label>Startdatum<input id="start" type="date" required/></label>
+        <label>Einddatum<input id="end" type="date" required/></label>
+        <label>Capaciteit<input id="capacity" type="number" min="1"/></label>
+        <label>Locatie
+          <select id="location">
+            <option value="">— kies locatie —</option>
+          </select>
+        </label>
+        <label>Beschrijving<textarea id="desc"></textarea></label>
+        <button type="submit">Opslaan</button>
+        <div id="msg" class="muted"></div>
+      </form>
+    </div>
 
-	<form id="eventForm" novalidate>
-		<div class="form-row">
-			<label for="title">Titel</label><br />
-			<input id="title" name="title" type="text" autocomplete="off" />
-		</div>
-		<button type="submit">Opslaan</button>
-		<div id="message" role="status" aria-live="polite"></div>
-		<p>
-			Regels: title moet een string zijn. Minimaal 3 karakters lang.<br />
-			Voorbeeld: "Go" → fout, "Go Workshop" → OK
-		</p>
-	</form>
+    <div class="list">
+      <h3>Opgeslagen events</h3>
+      <div id="events"></div>
+    </div>
+  </div>
 
-	<script>
-		(function () {
-			const form = document.getElementById('eventForm');
-			const titleInput = document.getElementById('title');
-			const msg = document.getElementById('message');
+<script>
+(async function(){
+  const locSel = document.getElementById('location');
+  const eventsDiv = document.getElementById('events');
+  const msg = document.getElementById('msg');
 
-			function validateTitle(value) {
-				if (typeof value !== 'string') {
-					return { ok: false, error: 'title moet een string zijn' };
-				}
-				const trimmed = value.trim();
-				if (trimmed.length < 3) {
-					return { ok: false, error: 'Minimaal 3 karakters lang' };
-				}
-				return { ok: true };
-			}
+  async function loadLocations(){
+    const r = await fetch('/api/locations');
+    const json = await r.json();
+    locSel.innerHTML = '<option value="">— kies locatie —</option>' + json.map(l=>`<option value="${l.id}">${l.name} (${l.city})</option>`).join('');
+  }
 
-			form.addEventListener('submit', function (e) {
-				e.preventDefault();
-				msg.textContent = '';
-				titleInput.classList.remove('input-invalid');
+  async function loadEvents(){
+    const r = await fetch('/api/events');
+    const arr = await r.json();
+    eventsDiv.innerHTML = arr.map(e=>`
+      <div class="ev">
+        <div style="font-weight:600">${e.title}</div>
+        <div class="muted">${e.start_date} → ${e.end_date} • ${e.location_name ? (e.location_name+' ('+e.location_city+')') : 'geen locatie'}</div>
+      </div>
+    `).join('') || '<div class="muted">Geen events</div>';
+  }
 
-				const value = titleInput.value;
-				const result = validateTitle(value);
+  document.getElementById('f').addEventListener('submit', async (ev)=>{
+    ev.preventDefault();
+    msg.textContent = '';
+    const payload = {
+      title: document.getElementById('title').value.trim(),
+      start_date: document.getElementById('start').value,
+      end_date: document.getElementById('end').value,
+      capacity: document.getElementById('capacity').value ? Number(document.getElementById('capacity').value) : undefined,
+      location_id: locSel.value ? Number(locSel.value) : undefined,
+      description: document.getElementById('desc').value.trim()
+    };
+    const res = await fetch('/api/events', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    const data = await res.json();
+    if (!res.ok) {
+      msg.textContent = data.error || 'Server error';
+      msg.style.color = 'crimson';
+      return;
+    }
+    msg.textContent = 'Event opgeslagen';
+    msg.style.color = 'green';
+    document.getElementById('f').reset();
+    await loadEvents();
+  });
 
-				if (!result.ok) {
-					msg.textContent = result.error;
-					msg.className = 'error';
-					titleInput.classList.add('input-invalid');
-					titleInput.focus();
-					return;
-				}
-
-				msg.textContent = 'Titel is geldig en opgeslagen (demo).';
-				msg.className = 'success';
-
-			});
-
-			titleInput.addEventListener('input', function () {
-				const res = validateTitle(titleInput.value);
-				if (res.ok) {
-					msg.textContent = '';
-					titleInput.classList.remove('input-invalid');
-				}
-			});
-		})();
-	</script>
+  await loadLocations();
+  await loadEvents();
+})();
+</script>
 </body>
 </html>
