@@ -1,98 +1,101 @@
 <!doctype html>
 <html lang="nl">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Event Planner — Kort formulier</title>
-<style>
-  body{font-family:system-ui,Arial;margin:20px;display:flex;gap:20px}
-  .wrap{display:flex;gap:20px;width:100%;max-width:1000px}
-  .form, .list{background:#fff;padding:16px;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
-  .form{flex:1}
-  .list{width:320px}
-  label{display:block;font-weight:600;margin-top:8px}
-  input,select,textarea{width:100%;padding:8px;margin-top:6px;border:1px solid #e6e9ef;border-radius:6px}
-  button{margin-top:10px;padding:8px 12px;border-radius:8px;border:none;background:#2563eb;color:#fff;cursor:pointer}
-  .ev{padding:8px;border-bottom:1px solid #f0f0f0}
-  .muted{color:#6b7280;font-size:13px}
-</style>
+  <meta charset="utf-8" />
+  <title>Event Planner API</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, Arial, sans-serif;
+      padding: 2rem;
+      line-height: 1.6;
+    }
+    h1, h2 {
+      color: #333;
+    }
+    code {
+      background: #f4f4f4;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+    }
+    ul {
+      margin-bottom: 1.5rem;
+    }
+    .endpoint {
+      margin-bottom: 0.75rem;
+    }
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="form">
-      <h3>Nieuw event</h3>
-      <form id="f">
-        <label>Titel<input id="title" required/></label>
-        <label>Startdatum<input id="start" type="date" required/></label>
-        <label>Einddatum<input id="end" type="date" required/></label>
-        <label>Capaciteit<input id="capacity" type="number" min="1"/></label>
-        <label>Locatie
-          <select id="location">
-            <option value="">— kies locatie —</option>
-          </select>
-        </label>
-        <label>Beschrijving<textarea id="desc"></textarea></label>
-        <button type="submit">Opslaan</button>
-        <div id="msg" class="muted"></div>
-      </form>
-    </div>
 
-    <div class="list">
-      <h3>Opgeslagen events</h3>
-      <div id="events"></div>
-    </div>
-  </div>
+  <h1>Event Planner API</h1>
 
-<script>
-(async function(){
-  const locSel = document.getElementById('location');
-  const eventsDiv = document.getElementById('events');
-  const msg = document.getElementById('msg');
+  <p>
+    Dit project bevat een REST API voor het beheren van <strong>events</strong> en
+    <strong>locations</strong>.
+  </p>
 
-  async function loadLocations(){
-    const r = await fetch('/api/locations');
-    const json = await r.json();
-    locSel.innerHTML = '<option value="">— kies locatie —</option>' + json.map(l=>`<option value="${l.id}">${l.name} (${l.city})</option>`).join('');
-  }
+  <h2>Algemene parameters</h2>
+  <ul>
+    <li><code>limit</code> (verplicht) — aantal records</li>
+    <li><code>offset</code> (verplicht) — startpositie</li>
+    <li><code>sort</code> (optioneel) — veld om op te sorteren</li>
+    <li><code>order</code> (optioneel) — <code>asc</code> of <code>desc</code></li>
+  </ul>
 
-  async function loadEvents(){
-    const r = await fetch('/api/events');
-    const arr = await r.json();
-    eventsDiv.innerHTML = arr.map(e=>`
-      <div class="ev">
-        <div style="font-weight:600">${e.title}</div>
-        <div class="muted">${e.start_date} → ${e.end_date} • ${e.location_name ? (e.location_name+' ('+e.location_city+')') : 'geen locatie'}</div>
-      </div>
-    `).join('') || '<div class="muted">Geen events</div>';
-  }
+  <h2>Events endpoints</h2>
+  <ul>
+    <li class="endpoint">
+      <code>GET /api/events?limit=&offset=&sort=&order=</code>
+    </li>
+    <li class="endpoint">
+      <code>GET /api/events/:id</code>
+    </li>
+    <li class="endpoint">
+      <code>GET /api/events/search?q=zoekterm</code>
+    </li>
+    <li class="endpoint">
+      <code>POST /api/events</code>
+    </li>
+    <li class="endpoint">
+      <code>PUT /api/events/:id</code>
+    </li>
+    <li class="endpoint">
+      <code>DELETE /api/events/:id</code>
+    </li>
+    <li class="endpoint">
+      <code>GET /api/events/upcoming</code>
+    </li>
+    <li class="endpoint">
+      <code>GET /api/events/past</code>
+    </li>
+  </ul>
 
-  document.getElementById('f').addEventListener('submit', async (ev)=>{
-    ev.preventDefault();
-    msg.textContent = '';
-    const payload = {
-      title: document.getElementById('title').value.trim(),
-      start_date: document.getElementById('start').value,
-      end_date: document.getElementById('end').value,
-      capacity: document.getElementById('capacity').value ? Number(document.getElementById('capacity').value) : undefined,
-      location_id: locSel.value ? Number(locSel.value) : undefined,
-      description: document.getElementById('desc').value.trim()
-    };
-    const res = await fetch('/api/events', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
-    const data = await res.json();
-    if (!res.ok) {
-      msg.textContent = data.error || 'Server error';
-      msg.style.color = 'crimson';
-      return;
-    }
-    msg.textContent = 'Event opgeslagen';
-    msg.style.color = 'green';
-    document.getElementById('f').reset();
-    await loadEvents();
-  });
+  <h2>Locations endpoints</h2>
+  <ul>
+    <li class="endpoint">
+      <code>GET /api/locations?limit=&offset=&sort=&order=</code>
+    </li>
+    <li class="endpoint">
+      <code>GET /api/locations/:id</code>
+    </li>
+    <li class="endpoint">
+      <code>GET /api/locations/search?city=Brussels</code>
+    </li>
+    <li class="endpoint">
+      <code>POST /api/locations</code>
+    </li>
+    <li class="endpoint">
+      <code>PUT /api/locations/:id</code>
+    </li>
+    <li class="endpoint">
+      <code>DELETE /api/locations/:id</code>
+    </li>
+  </ul>
 
-  await loadLocations();
-  await loadEvents();
-})();
-</script>
+  <p>
+    Alle endpoints gebruiken JSON voor request en response bodies.
+  </p>
+
 </body>
 </html>
