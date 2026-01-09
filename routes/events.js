@@ -83,42 +83,66 @@ router.post('/', (req, res) => {
 });
 
 router.put('/:id', (req, res) => {
-  const { error, value } = eventSchema.validate(req.body);
-  if (error) {
-    return res.status(400).json({ error: error.details[0].message });
-  }
+    const { error, value } = eventSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ error: error.details[0].message });
+    }
 
-  const result = db.prepare(`
+    const result = db.prepare(`
     UPDATE events
     SET title=?, description=?, start_date=?, end_date=?, location_id=?, capacity=?
     WHERE id=?
   `).run(
-    value.title,
-    value.description,
-    value.start_date,
-    value.end_date,
-    value.location_id,
-    value.capacity,
-    req.params.id
-  );
+        value.title,
+        value.description,
+        value.start_date,
+        value.end_date,
+        value.location_id,
+        value.capacity,
+        req.params.id
+    );
 
-  if (result.changes === 0) {
-    return res.status(404).json({ error: 'Event niet gevonden' });
-  }
+    if (result.changes === 0) {
+        return res.status(404).json({ error: 'Event niet gevonden' });
+    }
 
-  res.json({ success: true });
+    res.json({ success: true });
 });
 
 router.delete('/:id', (req, res) => {
-  const result = db
-    .prepare('DELETE FROM events WHERE id = ?')
-    .run(req.params.id);
+    const result = db
+        .prepare('DELETE FROM events WHERE id = ?')
+        .run(req.params.id);
 
-  if (result.changes === 0) {
-    return res.status(404).json({ error: 'Event niet gevonden' });
-  }
+    if (result.changes === 0) {
+        return res.status(404).json({ error: 'Event niet gevonden' });
+    }
 
-  res.json({ success: true });
+    res.json({ success: true });
+});
+
+router.get('/upcoming/list', (req, res) => {
+    const today = new Date().toISOString().slice(0, 10);
+
+    const events = db.prepare(`
+    SELECT * FROM events
+    WHERE start_date >= ?
+    ORDER BY start_date ASC
+  `).all(today);
+
+    res.json(events);
+});
+
+router.get('/past/list', (req, res) => {
+    const today = new Date().toISOString().slice(0, 10);
+
+    const events = db.prepare(`
+    SELECT * FROM events
+    WHERE end_date < ?
+    ORDER BY start_date DESC
+  `).all(today);
+
+    res.json(events);
 });
 
 export default router;
