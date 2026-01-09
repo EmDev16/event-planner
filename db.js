@@ -1,14 +1,13 @@
-import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
+import Database from 'better-sqlite3';
 
-const dbPath = path.resolve('data', 'database.sqlite');
-const dbDir = path.dirname(dbPath);
+const dataDir = path.resolve('data');
 
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir);
 }
 
-const db = new Database(dbPath);
+const db = new Database(path.join(dataDir, 'database.sqlite'));
 
 export default db;
