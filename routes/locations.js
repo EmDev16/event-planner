@@ -38,4 +38,19 @@ router.post('/', (req, res) => {
   return res.status(201).json({ success: true, data: created });
 });
 
+router.get('/search', (req, res) => {
+  const city = req.query.city;
+
+  if (!city) {
+    return res.status(400).json({ error: 'city is verplicht' });
+  }
+
+  const locations = db.prepare(`
+    SELECT * FROM locations WHERE city = ?
+  `).all(city);
+
+  res.json(locations);
+});
+
+
 export default router;
