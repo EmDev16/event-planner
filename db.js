@@ -1,14 +1,13 @@
-import Database from "better-sqlite3";
-import path from "path";
-import { fileURLToPath } from "url";
+import Database from 'better-sqlite3';
+import fs from 'fs';
+import path from 'path';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const dataDir = path.resolve('data');
 
-const dbPath = path.join(__dirname, "data", "database.sqlite");
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir);
+}
 
-const db = new Database(dbPath);
-
-db.pragma("foreign_keys = ON");
+const db = new Database(path.join(dataDir, 'database.sqlite'));
 
 export default db;
